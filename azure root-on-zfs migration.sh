@@ -84,8 +84,8 @@ mount --make-private --rbind /dev  /mnt/dev
 mount --make-private --rbind /proc /mnt/proc
 mount --make-private --rbind /sys  /mnt/sys
 chroot /mnt /usr/bin/env DISK=$DISK bash --login <<"EOT" # https://stackoverflow.com/questions/51305706/shell-script-that-does-chroot-and-execute-commands-in-chroot/51312156#51312156
-
 [[ $DISK ]] || ( echo 'plz set and pass $DISK like `DISK=...; ./stageX.sh`' && exit 1)
+
 rm /etc/resolv.conf # symlink to systemd-resolved
 echo 'nameserver 1.1.1.1' > /etc/resolv.conf
 echo 127.0.0.1 $(hostname) >> /etc/hosts
