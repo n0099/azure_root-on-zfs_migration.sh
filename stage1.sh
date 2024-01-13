@@ -8,6 +8,7 @@ apt install --yes gdisk zfsutils-linux
 systemctl stop zed
 blkdiscard -f $DISK
 sgdisk --zap-all $DISK
+
 sgdisk     -n1:1M:+512M   -t1:EF00 $DISK # uefi esp
 sgdisk -a1 -n5:24K:+1000K -t5:EF02 $DISK # bios mbr
 sgdisk     -n3:0:+1G      -t3:BE00 $DISK # /boot
@@ -75,7 +76,8 @@ rsync --stats --info progress2 --no-inc-recursive -aHAXh /null/ /mnt
 mount --make-private --rbind /dev  /mnt/dev
 mount --make-private --rbind /proc /mnt/proc
 mount --make-private --rbind /sys  /mnt/sys
-chroot /mnt /usr/bin/env DISK=$DISK bash --login <<"EOT" # https://stackoverflow.com/questions/51305706/shell-script-that-does-chroot-and-execute-commands-in-chroot/51312156#51312156
+# https://stackoverflow.com/questions/51305706/shell-script-that-does-chroot-and-execute-commands-in-chroot/51312156#51312156
+chroot /mnt /usr/bin/env DISK=$DISK bash --login <<"EOT"
 [[ $DISK ]] || ( echo 'plz set and pass $DISK like `DISK=...; ./stageX.sh`' && exit 1)
 
 rm /etc/resolv.conf # symlink to systemd-resolved
