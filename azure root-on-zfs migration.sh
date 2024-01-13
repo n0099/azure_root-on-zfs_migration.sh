@@ -99,7 +99,8 @@ EOT
 # MANUAL STAGE START
 chroot /mnt /usr/bin/env DISK=$DISK bash --login
 [[ $DISK ]] || ( echo 'plz set and pass $DISK like `DISK=...; ./stageX.sh`' && exit 1)
-vim /etc/fstab # replace LABEL=UUID with LABEL=EFI for /boot/efi and UUID=... with LABEL=rpool for /
+blkid | grep /dev/sdc
+vim /etc/fstab # replace first field with LABEL=EFI for mountpoint /boot/efi and LABEL=rpool for /
 # MANUAL STAGE END
 
 #!/bin/bash
@@ -108,6 +109,7 @@ set -e # http://mywiki.wooledge.org/BashFAQ/105
 # AUTO stage2_chroot.sh START
 mount /boot/efi
 
+rm -r /boot/grub
 mkdir /boot/efi/grub /boot/grub
 echo /boot/efi/grub /boot/grub none defaults,bind 0 0 >> /etc/fstab
 mount /boot/grub
@@ -115,12 +117,12 @@ mount /boot/grub
 apt install --yes grub-pc # bios
 apt install --yes grub-efi-amd64 grub-efi-amd64-signed shim-signed # uefi
 apt purge --yes os-prober
-apt install zfs-initramfs linux-image-generic
+apt install --yes zfs-initramfs linux-image-generic
 # https://askubuntu.com/questions/266772/why-are-there-so-many-linux-kernel-packages-on-my-machine-and-what-do-they-a
 # apt reinstall linux-image-azure # cannot trigger update-initramfs
-apt install linux-generic-hwe-22.04 # hwe6.5.0 vs azure6.2.0 vs gernic5.15.0 https://www.omgubuntu.co.uk/2024/01/ubuntu-2204-linux-6-5-kernel-update
-grub-probe /boot
-update-initramfs -c -k all -v # unexpecting Nothing to do, exiting.
+apt install --yes linux-generic-hwe-22.04 # hwe6.5.0 vs azure6.2.0 vs gernic5.15.0 https://www.omgubuntu.co.uk/2024/01/ubuntu-2204-linux-6-5-kernel-update
+grub-probe /boot # expecting `zfs`
+update-initramfs -c -k all -v # unexpecting `Nothing to do, exiting.`
 # AUTO stage2_chroot.sh END
 
 # MANUAL STAGE START
@@ -138,8 +140,8 @@ vim /etc/default/grub
 #!/bin/bash
 set -x
 set -e # http://mywiki.wooledge.org/BashFAQ/105
-[[ $DISK ]] || ( echo 'plz set and pass $DISK like `DISK=...; ./stageX.sh`' && exit 1)
 # AUTO stage3_chroot.sh START
+[[ $DISK ]] || ( echo 'plz set and pass $DISK like `DISK=...; ./stageX.sh`' && exit 1)
 update-grub # try umount && mount /boot/grub
 grub-install $DISK # bios
 grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=ubuntu --recheck --no-floppy # uefi
@@ -176,7 +178,7 @@ reboot
 # remove `rootwait=300` kernel param in /etc/default/grub https://unix.stackexchange.com/questions/67199/whats-the-point-of-rootwait-rootdelay won't help
 
 apt remove --yes linux-image-generic # select [No] for the ncurses popup about `You are running a kernel (version ...) and attempting to remove the same version. It is highly recommended to abort the kernel removal unless you are prepared to fix the system after removal. Abort kernel removal?`
-apt reinstall linux-azure
+apt reinstall --yes linux-azure
 shutdown
 
 # obtain an SAS url of `exported.vhd` in portal.azure.com for /dev/sdc
