@@ -21,7 +21,7 @@ sgdisk     -n1:1M:+512M   -t1:EF00 $DISK # uefi esp
 sgdisk -a1 -n5:24K:+1000K -t5:EF02 $DISK # bios mbr
 sgdisk     -n3:0:+1G      -t3:BE00 $DISK # /boot
 sgdisk     -n4:0:0        -t4:BF00 $DISK # /
-partprobe /dev/sdc # or `zpool create` may `cannot resolve path '{DISK}-partX'` that just created
+sleep 5 # or `zpool create` may `cannot resolve path '{DISK}-partX'` that just created
 
 zpool create \
     -o ashift=12 \
@@ -93,7 +93,6 @@ echo 127.0.0.1 $(hostname) >> /etc/hosts
 
 apt install --yes dosfstools
 mkdosfs -F 32 -s 1 -n EFI ${DISK}-part1
-mkdir /boot/efi
 EOT
 # AUTO stage1.sh END
 
@@ -109,6 +108,8 @@ vim /etc/fstab # replace first field with LABEL=EFI for mountpoint /boot/efi and
 set -x
 set -e # http://mywiki.wooledge.org/BashFAQ/105
 # AUTO stage2_chroot.sh START
+rm -r /boot/efi
+mkdir /boot/efi
 mount /boot/efi
 
 rm -r /boot/grub
@@ -121,14 +122,20 @@ apt install --yes grub-efi-amd64 grub-efi-amd64-signed shim-signed # uefi
 apt purge --yes os-prober
 apt install --yes zfs-initramfs
 # https://askubuntu.com/questions/266772/why-are-there-so-many-linux-kernel-packages-on-my-machine-and-what-do-they-a
-# apt reinstall linux-image-azure # cannot trigger update-initramfs
-apt install --yes linux-generic-hwe-22.04 # hwe6.5.0 vs azure6.2.0 vs gernic5.15.0 https://www.omgubuntu.co.uk/2024/01/ubuntu-2204-linux-6-5-kernel-update
+apt install --yes linux-generic-hwe-22.04 # hwe6.5.0 vs linux-image-azure6.2.0 vs linux-image-gernic@5.15.0 https://www.omgubuntu.co.uk/2024/01/ubuntu-2204-linux-6-5-kernel-update
 update-initramfs -c -k all -v # unexpecting `Nothing to do, exiting.`
 grub-probe /boot # expecting `zfs`
 # AUTO stage2_chroot.sh END
 
 # MANUAL STAGE START
-vim /etc/default/grub
+cat <<"EOT" > /etc/default/grub.d/99-zfs.cfg
+GRUB_CMDLINE_LINUX="$GRUB_CMDLINE_LINUX init_on_alloc=0"
+# below is optional
+GRUB_TIMEOUT_STYLE=hidden
+GRUB_TIMEOUT=5
+GRUB_RECORDFAIL_TIMEOUT=5
+EOT
+
 # FROM openzfs-docs:
 # Add init_on_alloc=0 to: GRUB_CMDLINE_LINUX_DEFAULT
 # Optional (but highly recommended): Make debugging GRUB easier:
@@ -144,7 +151,7 @@ vim /etc/default/grub
 # or just rm it and prepend the value of `GRUB_CMDLINE_LINUX_DEFAULT=` back to the same field in `/etc/default/grub`
 vim /etc/default/grub.d/50-cloudimg-settings.cfg
 # update the GRUB_FORCE_PARTUUID by `blkid | grep /dev/sdc4` https://askubuntu.com/questions/1375589/what-are-the-different-versions-available-as-ubuntu-cloud-images-general-guid
-echo GRUB_FORCEPARTUUID=$(blkid -s PARTUUID -o value ${DISK}-part4) > /etc/default/grub.d/40-force-partuuid.cf
+echo GRUB_FORCE_PARTUUID=$(blkid -s PARTUUID -o value ${DISK}-part4) > /etc/default/grub.d/40-force-partuuid.cfg
 # MANUAL STAGE END
 
 #!/bin/bash
@@ -176,8 +183,8 @@ sed -Ei "s|/mnt/?|/|" /etc/zfs/zfs-list.cache/*
 exit # repeat until back to the host shell
 
 mount | grep -v zfs | tac | awk '/\/mnt/ {print $3}' | xargs -I{} umount -lf {}
-zpool export bpool
-rm -r /mnt # to prevent `cannot export 'rpool': pool is busy`
+zpool export -a
+[[ $(find /mnt -print | head | wc -l) -eq 1 ]] && rm -rv /mnt # to prevent `cannot export 'rpool': pool is busy` https://unix.stackexchange.com/questions/62880/how-to-stop-the-find-command-after-first-match
 zpool export rpool
 reboot
 # MANUAL STAGE END
@@ -186,6 +193,8 @@ reboot
 # unattch /dev/sdb in portal.azure.com but keeps the broken /dev/sda and target /dev/sdc disks
 # reboot should be boot from /dev/sdc since /dev/sda is unbootable
 # if dmesg stuck at `Begin: Sleeping for ...` after spamming `sr 0:0:0:2: [sr0] tag#40 unaligned transfer` for a few minutes try remove `rootwait=300` kernel param in /etc/default/grub https://unix.stackexchange.com/questions/67199/whats-the-point-of-rootwait-rootdelay
+vim /etc/resolv.conf # revert `nameserver 1.1.1.1` that set in stage1.sh to use systemd-resolved
+vim /etc/hosts # revert `127.0.0.1 $(hostname)` that set in stage1.sh
 shutdown # after booting into /dev/sdc and everything works fine
 
 # obtain an SAS url of `exported.vhd` in portal.azure.com for /dev/sdc
