@@ -143,8 +143,8 @@ vim /etc/default/grub
 # sync changes from `/etc/default/grub` to prevent overrides
 # or just rm it and prepend the value of `GRUB_CMDLINE_LINUX_DEFAULT=` back to the same field in `/etc/default/grub`
 vim /etc/default/grub.d/50-cloudimg-settings.cfg
-# update the GRUB_FORCE_PARTUUID by `blkid | grep /dev/sdc` https://askubuntu.com/questions/1375589/what-are-the-different-versions-available-as-ubuntu-cloud-images-general-guid
-vim /etc/default/grub.d/40-force-partuuid.cfg
+# update the GRUB_FORCE_PARTUUID by `blkid | grep /dev/sdc4` https://askubuntu.com/questions/1375589/what-are-the-different-versions-available-as-ubuntu-cloud-images-general-guid
+echo GRUB_FORCEPARTUUID=$(blkid -s PARTUUID -o value ${DISK}-part4) > /etc/default/grub.d/40-force-partuuid.cf
 # MANUAL STAGE END
 
 #!/bin/bash
@@ -190,7 +190,7 @@ shutdown # after booting into /dev/sdc and everything works fine
 
 # obtain an SAS url of `exported.vhd` in portal.azure.com for /dev/sdc
 # create a VM with sufficient disk spaces or memory `/dev/shm tmpfs` to wget the `exported.vhd`
-# azcopy copy `exported.vhd` https://storage-account.blob.windows.net/SASurl
+# azcopy copy `exported.vhd` https://your-storage-account.blob.windows.net/SASurl
 # create a managed disk based on the `exported.vhd` in the storage account in portal.azure.com
 # create the VM with the custom image based on the managed disk as OS disk
 # custom image may disable the AccelNet NIC https://learn.microsoft.com/en-us/azure/virtual-network/accelerated-networking-mana-linux try manually enable it for the NIC then checkout does ifconfig contains NIC with name prefix `enP`
