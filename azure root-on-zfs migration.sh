@@ -188,10 +188,6 @@ reboot
 # dmesg will stuck at `Begin: Sleeping for ...` after spamming `sr 0:0:0:2: [sr0] tag#40 unaligned transfer` for a few minutes
 # remove `rootwait=300` kernel param in /etc/default/grub https://unix.stackexchange.com/questions/67199/whats-the-point-of-rootwait-rootdelay won't help
 
-apt remove --yes linux-image-generic # select [No] for the ncurses popup about `You are running a kernel (version ...) and attempting to remove the same version. It is highly recommended to abort the kernel removal unless you are prepared to fix the system after removal. Abort kernel removal?`
-apt reinstall --yes linux-azure
-shutdown
-
 # obtain an SAS url of `exported.vhd` in portal.azure.com for /dev/sdc
 # create a VM with sufficient disk spaces or memory `/dev/shm tmpfs` to wget the `exported.vhd`
 # azcopy copy `exported.vhd` https://storage-account.blob.windows.net/SASurl
