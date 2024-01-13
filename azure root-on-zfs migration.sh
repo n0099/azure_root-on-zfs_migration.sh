@@ -189,9 +189,8 @@ reboot
 shutdown # after booting into /dev/sdc and everything works fine
 
 # obtain an SAS url of `exported.vhd` in portal.azure.com for /dev/sdc
-# create a VM with sufficient disk spaces or memory `/dev/shm tmpfs` to wget the `exported.vhd`
-# azcopy copy `exported.vhd` https://your-storage-account.blob.windows.net/SASurl
-# create a managed disk based on the `exported.vhd` in the storage account in portal.azure.com
+# azcopy copy 'https://exported.vhd/SASurl' 'https://your-storage-account.blob.windows.net/container/SASurl'
+# create a managed disk based on the `exported.vhd` in the storage account's container on portal.azure.com
 # create the VM with the custom image based on the managed disk as OS disk
 # custom image may disable the AccelNet NIC https://learn.microsoft.com/en-us/azure/virtual-network/accelerated-networking-mana-linux try manually enable it for the NIC then checkout does ifconfig contains NIC with name prefix `enP`
 
