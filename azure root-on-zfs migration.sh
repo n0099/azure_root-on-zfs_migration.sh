@@ -9,7 +9,7 @@ DISK=/dev/disk/by-id/scsi-...
 
 #!/bin/bash
 set -x
-set -e # http://mywiki.wooledge.org/BashFAQ/105
+set -e # https://mywiki.wooledge.org/BashFAQ/105
 # AUTO stage1.sh START
 [[ $DISK ]] || ( echo 'plz set and pass $DISK like `DISK=...; ./stageX.sh`' && exit 1)
 
@@ -48,7 +48,8 @@ zpool create \
     -O canmount=off -O mountpoint=/ -R /mnt \
     rpool ${DISK}-part4
 
-# not setting zsys props due to https://github.com/openzfs/openzfs-docs/commit/8105d010fed0da7a59a02a2cc89e06f8c05e398a https://github.com/ubuntu/zsys/issues/230
+# not setting zsys props due to https://github.com/openzfs/openzfs-docs/commit/8105d010fed0da7a59a02a2cc89e06f8c05e398a
+# and https://github.com/ubuntu/zsys/issues/230
 # so these datasets are more similar to https://openzfs.github.io/openzfs-docs/Getting%20Started/ubuntu/ubuntu%20Bookworm%20Root%20on%20ZFS.html#step-3-system-installation
 # another dataset layout ref: https://github.com/djacu/nixos-on-zfs/blob/main/blog/2022-03-24.md
 zfs create -o canmount=off -o mountpoint=none rpool/ROOT
@@ -62,7 +63,9 @@ zfs create -o canmount=off rpool/var
 zfs create rpool/var/cache
 zfs create rpool/var/log
 zfs create -o canmount=off rpool/var/lib
-zfs create rpool/var/lib/docker # it's recommend to rebuild docker image layers with zfs storage driver https://docs.docker.com/storage/storagedriver/zfs-driver/ to prevent running another COWfs(overlayfs) over zfs https://anarc.at/blog/2022-11-17-zfs-migration/#docker-performance
+# it's recommend to rebuild docker image layers with zfs storage driver https://docs.docker.com/storage/storagedriver/zfs-driver/
+# to prevent running another COWfs(overlayfs) over zfs: https://anarc.at/blog/2022-11-17-zfs-migration/#docker-performance
+zfs create rpool/var/lib/docker
 zfs create rpool/var/lib/mysql
 zfs create rpool/var/lib/postgresql
 zfs create rpool/home
@@ -108,7 +111,7 @@ vim /etc/fstab # replace first field with LABEL=EFI for mountpoint /boot/efi and
 
 #!/bin/bash
 set -x
-set -e # http://mywiki.wooledge.org/BashFAQ/105
+set -e # https://mywiki.wooledge.org/BashFAQ/105
 # AUTO stage2_chroot.sh START
 rm -r /boot/efi
 mkdir /boot/efi
@@ -121,9 +124,13 @@ mount /boot/grub
 
 apt install --yes grub-efi-amd64 grub-efi-amd64-signed shim-signed zfs-initramfs
 apt purge --yes os-prober
-apt install --yes linux-generic-hwe-22.04 # hwe6.5.0 vs linux-image-azure6.2.0 vs linux-image-gernic@5.15.0 https://www.omgubuntu.co.uk/2024/01/ubuntu-2204-linux-6-5-kernel-update https://askubuntu.com/questions/266772/why-are-there-so-many-linux-kernel-packages-on-my-machine-and-what-do-they-a
+
+# hwe6.5.0 vs linux-image-azure6.2.0 vs linux-image-gernic@5.15.0 https://www.omgubuntu.co.uk/2024/01/ubuntu-2204-linux-6-5-kernel-update
+# https://askubuntu.com/questions/266772/why-are-there-so-many-linux-kernel-packages-on-my-machine-and-what-do-they-a
+apt install --yes linux-generic-hwe-22.04
 # if installing linux-generic-hwe-22.04 didn't trigger update-initramfs:
 # update-initramfs -c -k all -v # unexpecting `Nothing to do, exiting.`
+
 grub-probe /boot # expecting `zfs`
 
 cat <<"EOT" > /etc/default/grub.d/99-zfs.cfg
@@ -145,9 +152,9 @@ EOT
 # Later, once the system has rebooted twice and you are sure everything is working, you can undo these changes, if desired.
 
 # update the GRUB_FORCE_PARTUUID by `blkid | grep /dev/sdc4` https://askubuntu.com/questions/1375589/what-are-the-different-versions-available-as-ubuntu-cloud-images-general-guid
-echo GRUB_FORCE_PARTUUID=$(blkid -s PARTUUID -o value ${DISK}-part4) > /etc/default/grub.d/40-force-partuuid.cfg
+echo GRUB_FORCE_PARTUUID="$(blkid -s PARTUUID -o value ${DISK}-part4)" > /etc/default/grub.d/40-force-partuuid.cfg
 
-update-grub # try umount && mount /boot/grub
+update-grub
 grub-install $DISK # bios MBR
 grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=ubuntu --recheck --no-floppy # uefi ESP
 
@@ -179,7 +186,8 @@ reboot
 # /dev/sdb -> /dev/sdc finished and the current OS disk that being referred to /dev/sda somehow will be broken
 # unattch /dev/sdb in portal.azure.com but keeps the broken /dev/sda and target /dev/sdc disks
 # reboot should be boot from /dev/sdc since /dev/sda is unbootable
-# if dmesg stuck at `Begin: Sleeping for ...` after spamming `sr 0:0:0:2: [sr0] tag#40 unaligned transfer` for a few minutes try remove `rootwait=300` kernel param in /etc/default/grub https://unix.stackexchange.com/questions/67199/whats-the-point-of-rootwait-rootdelay
+# if dmesg stuck at `Begin: Sleeping for ...` after spamming `sr 0:0:0:2: [sr0] tag#40 unaligned transfer` for a few minutes
+# try remove `rootwait=300` kernel param in /etc/default/grub https://unix.stackexchange.com/questions/67199/whats-the-point-of-rootwait-rootdelay
 vim /etc/resolv.conf # revert `nameserver 1.1.1.1` that set in stage1.sh to use systemd-resolved
 vim /etc/hosts # revert `127.0.0.1 $(hostname)` that set in stage1.sh
 shutdown # after booting into /dev/sdc and everything works fine
@@ -188,7 +196,8 @@ shutdown # after booting into /dev/sdc and everything works fine
 # azcopy copy 'https://exported.vhd/SASurl' 'https://your-storage-account.blob.windows.net/container/SASurl'
 # create a managed disk based on the `exported.vhd` in the storage account's container
 # create the VM with the custom image based on the managed disk as OS disk
-# custom image may disable the AccelNet NIC https://learn.microsoft.com/en-us/azure/virtual-network/accelerated-networking-mana-linux try manually enable it for the NIC then checkout does ifconfig contains NIC with name prefix `enP`
+# custom image may disable the AccelNet NIC https://learn.microsoft.com/en-us/azure/virtual-network/accelerated-networking-mana-linux
+# try manually enable it for the NIC then checkout does ifconfig contains NIC with name prefix `enP`
 
 # the approach below is not working due to swapping the OS disk will wipe its ESP partition
 # create an new VM in portal.azure.com with arbitrary size of OS disk

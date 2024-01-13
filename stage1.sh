@@ -1,6 +1,6 @@
 #!/bin/bash
 set -x
-set -e # http://mywiki.wooledge.org/BashFAQ/105
+set -e # https://mywiki.wooledge.org/BashFAQ/105
 # AUTO stage1.sh START
 [[ $DISK ]] || ( echo 'plz set and pass $DISK like `DISK=...; ./stageX.sh`' && exit 1)
 
@@ -39,7 +39,8 @@ zpool create \
     -O canmount=off -O mountpoint=/ -R /mnt \
     rpool ${DISK}-part4
 
-# not setting zsys props due to https://github.com/openzfs/openzfs-docs/commit/8105d010fed0da7a59a02a2cc89e06f8c05e398a https://github.com/ubuntu/zsys/issues/230
+# not setting zsys props due to https://github.com/openzfs/openzfs-docs/commit/8105d010fed0da7a59a02a2cc89e06f8c05e398a
+# and https://github.com/ubuntu/zsys/issues/230
 # so these datasets are more similar to https://openzfs.github.io/openzfs-docs/Getting%20Started/ubuntu/ubuntu%20Bookworm%20Root%20on%20ZFS.html#step-3-system-installation
 # another dataset layout ref: https://github.com/djacu/nixos-on-zfs/blob/main/blog/2022-03-24.md
 zfs create -o canmount=off -o mountpoint=none rpool/ROOT
@@ -53,7 +54,9 @@ zfs create -o canmount=off rpool/var
 zfs create rpool/var/cache
 zfs create rpool/var/log
 zfs create -o canmount=off rpool/var/lib
-zfs create rpool/var/lib/docker # it's recommend to rebuild docker image layers with zfs storage driver https://docs.docker.com/storage/storagedriver/zfs-driver/ to prevent running another COWfs(overlayfs) over zfs https://anarc.at/blog/2022-11-17-zfs-migration/#docker-performance
+# it's recommend to rebuild docker image layers with zfs storage driver https://docs.docker.com/storage/storagedriver/zfs-driver/
+# to prevent running another COWfs(overlayfs) over zfs: https://anarc.at/blog/2022-11-17-zfs-migration/#docker-performance
+zfs create rpool/var/lib/docker
 zfs create rpool/var/lib/mysql
 zfs create rpool/var/lib/postgresql
 zfs create rpool/home
