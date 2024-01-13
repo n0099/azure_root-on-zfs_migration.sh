@@ -186,6 +186,7 @@ reboot
 # unattch /dev/sdb in portal.azure.com but keeps the broken /dev/sda and target /dev/sdc disks
 # reboot should be boot from /dev/sdc since /dev/sda is unbootable
 # if dmesg stuck at `Begin: Sleeping for ...` after spamming `sr 0:0:0:2: [sr0] tag#40 unaligned transfer` for a few minutes try remove `rootwait=300` kernel param in /etc/default/grub https://unix.stackexchange.com/questions/67199/whats-the-point-of-rootwait-rootdelay
+shutdown # after booting into /dev/sdc and everything works fine
 
 # obtain an SAS url of `exported.vhd` in portal.azure.com for /dev/sdc
 # create a VM with sufficient disk spaces or memory `/dev/shm tmpfs` to wget the `exported.vhd`
