@@ -96,10 +96,11 @@ mkdir /boot/efi
 EOT
 # AUTO stage1.sh END
 
-# MANUALL STAGE START
+# MANUAL STAGE START
 chroot /mnt /usr/bin/env DISK=$DISK bash --login
 [[ ! $DISK ]] || ( echo 'plz set and pass $DISK like `DISK=...; ./stageX.sh`' && exit 1)
 vim /etc/fstab # replace LABEL=UUID with LABEL=EFI for /boot/efi and UUID=... with LABEL=rpool for /
+# MANUAL STAGE END
 
 #!/bin/bash
 set -x
@@ -122,6 +123,7 @@ grub-probe /boot
 update-initramfs -c -k all -v # unexpecting Nothing to do, exiting.
 # AUTO stage2_chroot.sh END
 
+# MANUAL STAGE START
 vim /etc/default/grub
 # Add init_on_alloc=0 to: GRUB_CMDLINE_LINUX_DEFAULT
 # Comment out: GRUB_TIMEOUT_STYLE=hidden
@@ -130,6 +132,7 @@ vim /etc/default/grub
 # Remove quiet and splash from: GRUB_CMDLINE_LINUX_DEFAULT
 # Uncomment: GRUB_TERMINAL=console
 # Save and quit.
+# MANUAL STAGE END
 
 #!/bin/bash
 set -x
@@ -145,6 +148,7 @@ touch /etc/zfs/zfs-list.cache/bpool
 touch /etc/zfs/zfs-list.cache/rpool
 # AUTO stage3_chroot.sh END
 
+# MANUAL STAGE START
 zed -F &
 
 # Verify that zed updated the cache by making sure these are not empty:
@@ -161,6 +165,7 @@ umount /mnt
 rm -r /mnt # to prevent `cannot export 'rpool': pool is busy`
 zpool export -a
 reboot
+# MANUAL STAGE END
 
 # /dev/sdb -> /dev/sdc finished and the current OS disk that being referred to /dev/sda somehow will be broken
 # unattch /dev/sdb in portal.azure.com but keeps the broken /dev/sda and target /dev/sdc disks
