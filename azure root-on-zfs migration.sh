@@ -4,12 +4,14 @@
 # /dev/sdb refers to the original disk
 # and the target disk is /dev/sdc
 fdisk -l
-ls -la /dev/disk/by-id # /dev/sdb1 refers to the largest main partition in /dev/sdb
-DISK=/dev/disk/by-id/scsi-mounted-original-disk-id
+ls -la /dev/disk/by-id # figure out SCSI id of /dev/sdc
+DISK=/dev/disk/by-id/scsi-...
 
 #!/bin/bash
 set -x
 set -e # http://mywiki.wooledge.org/BashFAQ/105
+[[ ! $DISK ]] || ( echo 'plz set and pass $DISK like `DISK=...; ./stageX.sh`' && exit 1)
+# AUTO stage1.sh START
 apt install --yes gdisk zfsutils-linux
 systemctl stop zed
 blkdiscard -f $DISK
@@ -18,7 +20,7 @@ sgdisk     -n1:1M:+512M   -t1:EF00 $DISK # uefi esp
 sgdisk -a1 -n5:24K:+1000K -t5:EF02 $DISK # bios mbr
 sgdisk     -n3:0:+1G      -t3:BE00 $DISK # /boot
 sgdisk     -n4:0:0        -t4:BF00 $DISK # /
-partprobe # or `zpool create` may unable to discovery the ${DISK}-partX that just created
+partprobe /dev/sdc # or `zpool create` may `cannot resolve path '{DISK}-partX'` that just created
 
 zpool create \
     -o ashift=12 \
@@ -72,18 +74,18 @@ mkdir /mnt/run/lock
 mkdir -p /mnt/etc/zfs
 cp /etc/zfs/zpool.cache /mnt/etc/zfs/
 
-fdisk -l
+fdisk -l /dev/sdb /dev/sdc
 mkdir /null
-mount /dev/sdb1 /null
+mount /dev/sdb1 /null # /dev/sdb1 refers to the largest main partition in /dev/sdb
 
 rsync --stats --info progress2 --no-inc-recursive -aHAXh /null/ /mnt
 
 mount --make-private --rbind /dev  /mnt/dev
 mount --make-private --rbind /proc /mnt/proc
 mount --make-private --rbind /sys  /mnt/sys
-chroot /mnt /usr/bin/env DISK=$DISK bash --login
+chroot /mnt /usr/bin/env DISK=$DISK bash --login <<"EOT" # https://stackoverflow.com/questions/51305706/shell-script-that-does-chroot-and-execute-commands-in-chroot/51312156#51312156
 
-echo $DISK
+[[ ! $DISK ]] || ( echo 'plz set and pass $DISK like ``DISK=...; ./stageX.sh``' && exit 1)
 rm /etc/resolv.conf # symlink to systemd-resolved
 echo 'nameserver 1.1.1.1' > /etc/resolv.conf
 echo 127.0.0.1 $(hostname) >> /etc/hosts
@@ -91,7 +93,16 @@ echo 127.0.0.1 $(hostname) >> /etc/hosts
 apt install --yes dosfstools
 mkdosfs -F 32 -s 1 -n EFI ${DISK}-part1
 mkdir /boot/efi
+EOT
+# AUTO stage1.sh END
+
+# MANUALL STAGE START
 vim /etc/fstab # replace LABEL=UUID with LABEL=EFI for /boot/efi and UUID=... with LABEL=rpool for /
+
+#!/bin/bash
+set -x
+set -e # http://mywiki.wooledge.org/BashFAQ/105
+# AUTO stage2.sh START
 mount /boot/efi
 
 mkdir /boot/efi/grub /boot/grub
@@ -107,6 +118,7 @@ apt install zfs-initramfs linux-image-generic
 apt install linux-generic-hwe-22.04 # hwe6.5.0 vs azure6.2.0 vs gernic5.15.0 https://www.omgubuntu.co.uk/2024/01/ubuntu-2204-linux-6-5-kernel-update
 grub-probe /boot
 update-initramfs -c -k all -v # unexpecting Nothing to do, exiting.
+# AUTO stage2.sh END
 
 vim /etc/default/grub
 # Add init_on_alloc=0 to: GRUB_CMDLINE_LINUX_DEFAULT
@@ -117,6 +129,11 @@ vim /etc/default/grub
 # Uncomment: GRUB_TERMINAL=console
 # Save and quit.
 
+#!/bin/bash
+set -x
+set -e # http://mywiki.wooledge.org/BashFAQ/105
+[[ ! $DISK ]] || ( echo 'plz set and pass $DISK like `DISK=...; ./stageX.sh`' && exit 1)
+# AUTO stage3.sh START
 update-grub # try umount && mount /boot/grub
 grub-install $DISK # bios
 grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=ubuntu --recheck --no-floppy # uefi
@@ -124,6 +141,8 @@ grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=ubunt
 mkdir /etc/zfs/zfs-list.cache
 touch /etc/zfs/zfs-list.cache/bpool
 touch /etc/zfs/zfs-list.cache/rpool
+# AUTO stage3.sh END
+
 zed -F &
 
 # Verify that zed updated the cache by making sure these are not empty:
@@ -137,7 +156,7 @@ sed -Ei "s|/mnt/?|/|" /etc/zfs/zfs-list.cache/*
 
 mount | grep -v zfs | tac | awk '/\/mnt/ {print $3}' | xargs -I{} umount -lf {}
 umount /mnt
-rm -r /mnt
+rm -r /mnt # to prevent `cannot export 'rpool': pool is busy`
 zpool export -a
 reboot
 
