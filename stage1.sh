@@ -1,8 +1,9 @@
 #!/bin/bash
 set -x
 set -e # http://mywiki.wooledge.org/BashFAQ/105
-[[ $DISK ]] || ( echo 'plz set and pass $DISK like `DISK=...; ./stageX.sh`' && exit 1)
 # AUTO stage1.sh START
+[[ $DISK ]] || ( echo 'plz set and pass $DISK like `DISK=...; ./stageX.sh`' && exit 1)
+
 apt install --yes gdisk zfsutils-linux
 systemctl stop zed
 blkdiscard -f $DISK

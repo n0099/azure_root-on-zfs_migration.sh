@@ -10,8 +10,9 @@ DISK=/dev/disk/by-id/scsi-...
 #!/bin/bash
 set -x
 set -e # http://mywiki.wooledge.org/BashFAQ/105
-[[ $DISK ]] || ( echo 'plz set and pass $DISK like `DISK=...; ./stageX.sh`' && exit 1)
 # AUTO stage1.sh START
+[[ $DISK ]] || ( echo 'plz set and pass $DISK like `DISK=...; ./stageX.sh`' && exit 1)
+
 apt install --yes gdisk zfsutils-linux
 systemctl stop zed
 blkdiscard -f $DISK
@@ -99,6 +100,7 @@ EOT
 # MANUAL STAGE START
 chroot /mnt /usr/bin/env DISK=$DISK bash --login
 [[ $DISK ]] || ( echo 'plz set and pass $DISK like `DISK=...; ./stageX.sh`' && exit 1)
+
 blkid | grep /dev/sdc
 vim /etc/fstab # replace first field with LABEL=EFI for mountpoint /boot/efi and LABEL=rpool for /
 # MANUAL STAGE END
@@ -129,12 +131,20 @@ grub-probe /boot # expecting `zfs`
 vim /etc/default/grub
 # FROM openzfs-docs:
 # Add init_on_alloc=0 to: GRUB_CMDLINE_LINUX_DEFAULT
+# Optional (but highly recommended): Make debugging GRUB easier:
 # Comment out: GRUB_TIMEOUT_STYLE=hidden
 # Set: GRUB_TIMEOUT=5
 # Below GRUB_TIMEOUT, add: GRUB_RECORDFAIL_TIMEOUT=5
 # Remove quiet and splash from: GRUB_CMDLINE_LINUX_DEFAULT
 # Uncomment: GRUB_TERMINAL=console
 # Save and quit.
+# Later, once the system has rebooted twice and you are sure everything is working, you can undo these changes, if desired.
+
+# sync changes from `/etc/default/grub` to prevent overrides
+# or just rm it and prepend the value of `GRUB_CMDLINE_LINUX_DEFAULT=` back to the same field in `/etc/default/grub`
+vim /etc/default/grub.d/50-cloudimg-settings.cfg
+# update the GRUB_FORCE_PARTUUID by `blkid | grep /dev/sdc` https://askubuntu.com/questions/1375589/what-are-the-different-versions-available-as-ubuntu-cloud-images-general-guid
+vim /etc/default/grub.d/40-force-partuuid.cfg
 # MANUAL STAGE END
 
 #!/bin/bash
@@ -142,6 +152,7 @@ set -x
 set -e # http://mywiki.wooledge.org/BashFAQ/105
 # AUTO stage3_chroot.sh START
 [[ $DISK ]] || ( echo 'plz set and pass $DISK like `DISK=...; ./stageX.sh`' && exit 1)
+
 update-grub # try umount && mount /boot/grub
 grub-install $DISK # bios
 grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=ubuntu --recheck --no-floppy # uefi
