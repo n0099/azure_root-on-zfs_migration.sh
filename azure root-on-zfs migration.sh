@@ -192,8 +192,8 @@ vim /etc/resolv.conf # revert `nameserver 1.1.1.1` that set in stage1.sh to use 
 vim /etc/hosts # revert `127.0.0.1 $(hostname)` that set in stage1.sh
 shutdown # after booting into /dev/sdc and everything works fine
 
-# obtain an SAS url of `exported.vhd` in portal.azure.com for /dev/sdc
-# azcopy copy 'https://exported.vhd/SASurl' 'https://your-storage-account.blob.windows.net/container/SASurl'
+# obtain an SAS url for disk exporting of the managed disk on /dev/sdc in portal.azure.com
+# azcopy copy 'https://xxx.xxx.blob.storage.azure.net/xxx/abcd?SASquery_string_params' 'https://your-storage-account.blob.core.windows.net/some-container/exported.vhd?SASquery_string_params'
 # create a managed disk based on the `exported.vhd` in the storage account's container
 # create the VM with the custom image based on the managed disk as OS disk
 # custom image may disable the AccelNet NIC https://learn.microsoft.com/en-us/azure/virtual-network/accelerated-networking-mana-linux
