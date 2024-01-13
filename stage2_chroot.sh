@@ -1,7 +1,7 @@
 #!/bin/bash
 set -x
 set -e # http://mywiki.wooledge.org/BashFAQ/105
-# AUTO stage2.sh START
+# AUTO stage2_chroot.sh START
 mount /boot/efi
 
 mkdir /boot/efi/grub /boot/grub
@@ -17,4 +17,4 @@ apt install zfs-initramfs linux-image-generic
 apt install linux-generic-hwe-22.04 # hwe6.5.0 vs azure6.2.0 vs gernic5.15.0 https://www.omgubuntu.co.uk/2024/01/ubuntu-2204-linux-6-5-kernel-update
 grub-probe /boot
 update-initramfs -c -k all -v # unexpecting Nothing to do, exiting.
-# AUTO stage2.sh END
+# AUTO stage2_chroot.sh END

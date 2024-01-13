@@ -97,12 +97,14 @@ EOT
 # AUTO stage1.sh END
 
 # MANUALL STAGE START
+chroot /mnt /usr/bin/env DISK=$DISK bash --login
+[[ ! $DISK ]] || ( echo 'plz set and pass $DISK like `DISK=...; ./stageX.sh`' && exit 1)
 vim /etc/fstab # replace LABEL=UUID with LABEL=EFI for /boot/efi and UUID=... with LABEL=rpool for /
 
 #!/bin/bash
 set -x
 set -e # http://mywiki.wooledge.org/BashFAQ/105
-# AUTO stage2.sh START
+# AUTO stage2_chroot.sh START
 mount /boot/efi
 
 mkdir /boot/efi/grub /boot/grub
@@ -118,7 +120,7 @@ apt install zfs-initramfs linux-image-generic
 apt install linux-generic-hwe-22.04 # hwe6.5.0 vs azure6.2.0 vs gernic5.15.0 https://www.omgubuntu.co.uk/2024/01/ubuntu-2204-linux-6-5-kernel-update
 grub-probe /boot
 update-initramfs -c -k all -v # unexpecting Nothing to do, exiting.
-# AUTO stage2.sh END
+# AUTO stage2_chroot.sh END
 
 vim /etc/default/grub
 # Add init_on_alloc=0 to: GRUB_CMDLINE_LINUX_DEFAULT
@@ -133,7 +135,7 @@ vim /etc/default/grub
 set -x
 set -e # http://mywiki.wooledge.org/BashFAQ/105
 [[ ! $DISK ]] || ( echo 'plz set and pass $DISK like `DISK=...; ./stageX.sh`' && exit 1)
-# AUTO stage3.sh START
+# AUTO stage3_chroot.sh START
 update-grub # try umount && mount /boot/grub
 grub-install $DISK # bios
 grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=ubuntu --recheck --no-floppy # uefi
@@ -141,7 +143,7 @@ grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=ubunt
 mkdir /etc/zfs/zfs-list.cache
 touch /etc/zfs/zfs-list.cache/bpool
 touch /etc/zfs/zfs-list.cache/rpool
-# AUTO stage3.sh END
+# AUTO stage3_chroot.sh END
 
 zed -F &
 
