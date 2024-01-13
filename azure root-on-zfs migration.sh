@@ -163,7 +163,7 @@ touch /etc/zfs/zfs-list.cache/rpool
 # AUTO stage3_chroot.sh END
 
 # MANUAL STAGE START
-zed -F &
+zed -F & # Press Enter
 
 # FROM openzfs-docs:
 # Verify that zed updated the cache by making sure these are not empty:
@@ -173,12 +173,12 @@ cat /etc/zfs/zfs-list.cache/rpool
 
 fg # Press Ctrl-C.
 sed -Ei "s|/mnt/?|/|" /etc/zfs/zfs-list.cache/*
-# exit && exit && exit # nesting chroot and bash --login and zsh
+exit # repeat until back to the host shell
 
 mount | grep -v zfs | tac | awk '/\/mnt/ {print $3}' | xargs -I{} umount -lf {}
-umount /mnt
+zpool export bpool
 rm -r /mnt # to prevent `cannot export 'rpool': pool is busy`
-zpool export -a
+zpool export rpool
 reboot
 # MANUAL STAGE END
 
