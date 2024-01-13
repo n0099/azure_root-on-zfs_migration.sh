@@ -10,7 +10,7 @@ DISK=/dev/disk/by-id/scsi-...
 #!/bin/bash
 set -x
 set -e # http://mywiki.wooledge.org/BashFAQ/105
-[[ ! $DISK ]] || ( echo 'plz set and pass $DISK like `DISK=...; ./stageX.sh`' && exit 1)
+[[ $DISK ]] || ( echo 'plz set and pass $DISK like `DISK=...; ./stageX.sh`' && exit 1)
 # AUTO stage1.sh START
 apt install --yes gdisk zfsutils-linux
 systemctl stop zed
@@ -85,7 +85,7 @@ mount --make-private --rbind /proc /mnt/proc
 mount --make-private --rbind /sys  /mnt/sys
 chroot /mnt /usr/bin/env DISK=$DISK bash --login <<"EOT" # https://stackoverflow.com/questions/51305706/shell-script-that-does-chroot-and-execute-commands-in-chroot/51312156#51312156
 
-[[ ! $DISK ]] || ( echo 'plz set and pass $DISK like `DISK=...; ./stageX.sh`' && exit 1)
+[[ $DISK ]] || ( echo 'plz set and pass $DISK like `DISK=...; ./stageX.sh`' && exit 1)
 rm /etc/resolv.conf # symlink to systemd-resolved
 echo 'nameserver 1.1.1.1' > /etc/resolv.conf
 echo 127.0.0.1 $(hostname) >> /etc/hosts
@@ -98,7 +98,7 @@ EOT
 
 # MANUAL STAGE START
 chroot /mnt /usr/bin/env DISK=$DISK bash --login
-[[ ! $DISK ]] || ( echo 'plz set and pass $DISK like `DISK=...; ./stageX.sh`' && exit 1)
+[[ $DISK ]] || ( echo 'plz set and pass $DISK like `DISK=...; ./stageX.sh`' && exit 1)
 vim /etc/fstab # replace LABEL=UUID with LABEL=EFI for /boot/efi and UUID=... with LABEL=rpool for /
 # MANUAL STAGE END
 
@@ -138,7 +138,7 @@ vim /etc/default/grub
 #!/bin/bash
 set -x
 set -e # http://mywiki.wooledge.org/BashFAQ/105
-[[ ! $DISK ]] || ( echo 'plz set and pass $DISK like `DISK=...; ./stageX.sh`' && exit 1)
+[[ $DISK ]] || ( echo 'plz set and pass $DISK like `DISK=...; ./stageX.sh`' && exit 1)
 # AUTO stage3_chroot.sh START
 update-grub # try umount && mount /boot/grub
 grub-install $DISK # bios
