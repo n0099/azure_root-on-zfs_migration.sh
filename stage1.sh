@@ -51,7 +51,7 @@ zfs create -o canmount=off rpool/var
 zfs create rpool/var/cache
 zfs create rpool/var/log
 zfs create -o canmount=off rpool/var/lib
-zfs create rpool/var/lib/docker
+zfs create rpool/var/lib/docker # it's recommend to rebuild docker image layers with zfs storage driver https://docs.docker.com/storage/storagedriver/zfs-driver/ to prevent running another COWfs(overlayfs) over zfs https://anarc.at/blog/2022-11-17-zfs-migration/#docker-performance
 zfs create rpool/var/lib/mysql
 zfs create rpool/var/lib/postgresql
 zfs create rpool/home

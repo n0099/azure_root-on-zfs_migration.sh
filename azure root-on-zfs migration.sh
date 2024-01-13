@@ -60,7 +60,7 @@ zfs create -o canmount=off rpool/var
 zfs create rpool/var/cache
 zfs create rpool/var/log
 zfs create -o canmount=off rpool/var/lib
-zfs create rpool/var/lib/docker
+zfs create rpool/var/lib/docker # it's recommend to rebuild docker image layers with zfs storage driver https://docs.docker.com/storage/storagedriver/zfs-driver/ to prevent running another COWfs(overlayfs) over zfs https://anarc.at/blog/2022-11-17-zfs-migration/#docker-performance
 zfs create rpool/var/lib/mysql
 zfs create rpool/var/lib/postgresql
 zfs create rpool/home
@@ -125,6 +125,7 @@ update-initramfs -c -k all -v # unexpecting Nothing to do, exiting.
 
 # MANUAL STAGE START
 vim /etc/default/grub
+# FROM openzfs-docs:
 # Add init_on_alloc=0 to: GRUB_CMDLINE_LINUX_DEFAULT
 # Comment out: GRUB_TIMEOUT_STYLE=hidden
 # Set: GRUB_TIMEOUT=5
@@ -151,6 +152,7 @@ touch /etc/zfs/zfs-list.cache/rpool
 # MANUAL STAGE START
 zed -F &
 
+# FROM openzfs-docs:
 # Verify that zed updated the cache by making sure these are not empty:
 cat /etc/zfs/zfs-list.cache/bpool
 echo
