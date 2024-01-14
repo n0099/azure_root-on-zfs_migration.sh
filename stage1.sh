@@ -62,8 +62,13 @@ zfs create -o canmount=off rpool/var/lib
 # it's recommend to rebuild docker image layers with zfs storage driver https://docs.docker.com/storage/storagedriver/zfs-driver/
 # to prevent running another COWfs(overlayfs) over zfs: https://anarc.at/blog/2022-11-17-zfs-migration/#docker-performance
 zfs create rpool/var/lib/docker
-zfs create rpool/var/lib/mysql
-zfs create rpool/var/lib/postgresql
+# https://planet.mysql.com/entry/?id=19489
+# https://www.percona.com/blog/mysql-zfs-performance-update/
+# https://www.reddit.com/r/zfs/comments/u1xklc/mariadbmysql_database_settings_for_zfs/
+zfs create -o recordsize=16k -o primarycache=metadata -o atime=off rpool/var/lib/mysql
+# https://www.reddit.com/r/zfs/comments/3mvv8e/does_anyone_run_mysql_or_postgresql_on_zfs/
+# https://news.ycombinator.com/item?id=29647645
+zfs create -o recordsize=8k -o primarycache=metadata -o atime=off rpool/var/lib/postgresql
 zfs create rpool/home
 zfs create rpool/home/www
 zfs create rpool/home/www/log
