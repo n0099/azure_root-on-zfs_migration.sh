@@ -22,7 +22,12 @@ sgdisk     -n1:1M:+512M   -t1:EF00 $DISK # uefi esp
 sgdisk -a1 -n5:24K:+1000K -t5:EF02 $DISK # bios mbr
 sgdisk     -n3:0:+1G      -t3:BE00 $DISK # /boot
 sgdisk     -n4:0:0        -t4:BF00 $DISK # /
-sleep 5 # or `zpool create` may `cannot resolve path '{DISK}-partX'` that just created
+
+# https://serverfault.com/questions/36038/reread-partition-table-without-rebooting
+# or `zpool create` may `cannot resolve path '{DISK}-partX'` that just created
+partprobe $DISK
+hdparm -z $DISK
+blockdev --rereadpt $DISK
 
 zpool create \
     -o ashift=12 \
