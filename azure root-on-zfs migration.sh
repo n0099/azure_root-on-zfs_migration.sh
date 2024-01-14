@@ -75,6 +75,8 @@ zfs create rpool/var/lib/docker
 # https://www.percona.com/blog/mysql-zfs-performance-update/
 # https://www.reddit.com/r/zfs/comments/u1xklc/mariadbmysql_database_settings_for_zfs/
 zfs create -o recordsize=16k -o primarycache=metadata -o atime=off rpool/var/lib/mysql
+# https://dev.mysql.com/doc/dev/mysql-server/latest/PAGE_INNODB_REDO_LOG_FORMAT.html
+# https://stackoverflow.com/questions/70637782/why-doesnt-mysql-innodb-redo-log-block-writing-need-double-write
 zfs create -o recordsize=128k -o primarycache=metadata -o atime=off rpool/var/lib/mysql/#innodb_redo
 # https://www.reddit.com/r/zfs/comments/3mvv8e/does_anyone_run_mysql_or_postgresql_on_zfs/
 # https://news.ycombinator.com/item?id=29647645
