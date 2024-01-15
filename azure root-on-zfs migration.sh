@@ -57,11 +57,9 @@ zpool create \
 # and https://github.com/ubuntu/zsys/issues/230
 # so these datasets are more similar to https://openzfs.github.io/openzfs-docs/Getting%20Started/ubuntu/ubuntu%20Bookworm%20Root%20on%20ZFS.html#step-3-system-installation
 # another dataset layout ref: https://github.com/djacu/nixos-on-zfs/blob/main/blog/2022-03-24.md
-zfs create -o canmount=off -o mountpoint=none rpool/ROOT
-zfs create -o canmount=off -o mountpoint=none bpool/BOOT
-zfs create -o canmount=noauto -o mountpoint=/ rpool/ROOT/ubuntu
+zfs create -o mountpoint=/boot bpool/BOOT
+zfs create -o canmount=noauto -o mountpoint=/ rpool/ROOT
 zfs mount rpool/ROOT/ubuntu
-zfs create -o mountpoint=/boot bpool/BOOT/ubuntu
 
 zfs create -o canmount=off rpool/usr
 zfs create -o canmount=off rpool/var
@@ -85,9 +83,6 @@ zfs create -o recordsize=128k -o primarycache=metadata -o atime=off rpool/var/li
 # https://www.reddit.com/r/zfs/comments/3mvv8e/does_anyone_run_mysql_or_postgresql_on_zfs/
 # https://news.ycombinator.com/item?id=29647645
 zfs create -o recordsize=8k -o primarycache=metadata -o atime=off rpool/var/lib/postgresql
-zfs create rpool/home
-zfs create rpool/home/www
-zfs create rpool/home/www/log
 
 mkdir /mnt/run
 mount -t tmpfs tmpfs /mnt/run
