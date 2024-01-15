@@ -70,7 +70,11 @@ zfs create rpool/var/log
 zfs create -o canmount=off rpool/var/lib
 # it's recommend to rebuild docker image layers with zfs storage driver https://docs.docker.com/storage/storagedriver/zfs-driver/
 # to prevent running another COWfs(overlayfs) over zfs: https://anarc.at/blog/2022-11-17-zfs-migration/#docker-performance
-zfs create rpool/var/lib/docker
+# https://gdevillele.github.io/engine/userguide/storagedriver/zfs-driver/
+# https://www.reddit.com/r/docker/comments/my6p90/comment/gvv3bej/?context=3
+# https://www.reddit.com/r/docker/comments/smtzho/docker_and_zfs_looks_like_a_mess/
+# https://github.com/docker/for-linux/issues/1410
+zfs create -o com.sun:auto-snapshot=false rpool/var/lib/docker
 # https://planet.mysql.com/entry/?id=19489
 # https://www.percona.com/blog/mysql-zfs-performance-update/
 # https://www.reddit.com/r/zfs/comments/u1xklc/mariadbmysql_database_settings_for_zfs/
