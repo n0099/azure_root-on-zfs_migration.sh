@@ -118,7 +118,7 @@ chroot /mnt /usr/bin/env DISK=$DISK bash --login
 [[ $DISK ]] || ( echo 'plz set and pass $DISK like `DISK=...; ./stageX.sh`' && exit 1)
 
 blkid | grep /dev/sdc
-vim /etc/fstab # replace first field with LABEL=EFI for mountpoint /boot/efi and LABEL=rpool for /
+vim /etc/fstab # replace first field with LABEL=EFI for mountpoint /boot/efi and remove the line for mountpoint /
 # MANUAL STAGE END
 
 #!/bin/bash
@@ -137,9 +137,9 @@ mount /boot/grub
 apt install --yes grub-efi-amd64 grub-efi-amd64-signed shim-signed zfs-initramfs
 apt purge --yes os-prober
 
-# hwe6.5.0 vs linux-image-azure6.2.0 vs linux-image-gernic@5.15.0 https://www.omgubuntu.co.uk/2024/01/ubuntu-2204-linux-6-5-kernel-update
+# linux-generic-hwe-22.04@6.5.0 vs linux-azure-edge@6.5.0 vs linux-azure@6.2.0 vs linux-gernic@5.15.0 https://www.omgubuntu.co.uk/2024/01/ubuntu-2204-linux-6-5-kernel-update
 # https://askubuntu.com/questions/266772/why-are-there-so-many-linux-kernel-packages-on-my-machine-and-what-do-they-a
-apt install --yes linux-generic-hwe-22.04
+apt install --yes linux-azure-edge
 # if installing linux-generic-hwe-22.04 didn't trigger update-initramfs:
 # update-initramfs -c -k all -v # unexpecting `Nothing to do, exiting.`
 
