@@ -59,7 +59,7 @@ zpool create \
 # another dataset layout ref: https://github.com/djacu/nixos-on-zfs/blob/main/blog/2022-03-24.md
 zfs create -o mountpoint=/boot bpool/BOOT
 zfs create -o canmount=noauto -o mountpoint=/ rpool/ROOT
-zfs mount rpool/ROOT/ubuntu
+zfs mount rpool/ROOT
 
 zfs create -o canmount=off rpool/usr
 zfs create -o canmount=off rpool/var
